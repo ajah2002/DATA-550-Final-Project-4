@@ -1,0 +1,115 @@
+---
+title: "Final Project 2 R Markdown"
+author: "Alyssa Jesse"
+date: "2026-02-19"
+output: html_document
+---
+```{r, set-chunk-opts, echo=FALSE}
+library(knitr)
+opts_chunk$set(
+  echo = FALSE, warning = FALSE, message = FALSE
+)
+```
+
+# Introduction 
+This report utilizes data from the Behavioral Risk Factor Surveillance 
+System, collected from 2013-2022 (n = 40k). The survey collects basic information on U.S. residents' health-related risk behaviors, chronic health conditions, and use of preventive services. In particular, the data focuses on the surveillance of
+vision and eye health and is stratified by several combinations of age group,
+race/ethnicity, sex, risk factors, and state. For the purposes of this project, 
+we will specifically focus on the most recent year (2022) for two southern states,
+Texas and Georgia.
+
+## Analysis Objectives
+There are two analysis objectives in this report. First, we will investigate whether the crude prevalence of vision impairment differ by age, sex, and race/ethnicity in the two states. Second, we will explore whether the predicted prevalence of vision impairment is higher among individuals with different chronic disease risk factors, and how that is different in both states.
+
+# Descriptive Analysis 
+
+```{r, load_data_and_subset, echo=FALSE}
+library(labelled)
+library(gtsummary)
+library(car)
+library(here)
+library(dplyr)
+
+data <- readRDS(here::here("output/data_clean.rds"))
+south_data22 <- data %>%
+  filter(LocationAbbr %in% c("TX" ,"GA"),
+         YearStart == 2022,
+         Data_Value_Type == "Crude Prevalence")
+#head(south_data22)
+
+```
+
+```{r, making_table_one, echo=FALSE}
+library(tidyverse)
+library(gt)
+
+table_data <- bind_rows(
+  # Age Group
+  south_data22 |> filter(Sex == "Both sexes", 
+                          RaceEthnicity == "All races", 
+                          RiskFactor == "All participants", 
+                          Age != "18 years and older") |>
+    mutate(Category = "AGE", Label = Age),
+  
+  # Sex
+  south_data22 |> filter(Age == "18 years and older", 
+                          RaceEthnicity == "All races", 
+                          RiskFactor == "All participants", 
+                          Sex != "Both sexes") |>
+    mutate(Category = "SEX", Label = Sex),
+  
+  # Race/Ethnicity - Asian and Native American are blanks so I will exclude
+  south_data22 |> filter(Age == "18 years and older", 
+                          Sex == "Both sexes", 
+                          RiskFactor == "All participants", 
+                          RaceEthnicity %in% c("White, non-Hispanic", 
+                                               "Black, non-Hispanic", 
+                                               "Hispanic, any race")) |>
+    mutate(Category = "RACE/ETHNICITY", Label = RaceEthnicity),
+)
+
+# Using features in GT package
+table_data |>
+  select(Category, Label, LocationAbbr, Data_Value) |>
+  pivot_wider(names_from = LocationAbbr, values_from = Data_Value) |>
+  group_by(Category) |>
+  gt() |>
+  cols_label(Label = "Characteristic", TX = "Texas (%)", GA = "Georgia (%)") |>
+  fmt_missing(columns = everything(), missing_text = "")
+
+```
+Overall, the prevalence of visual impairment is higher in Texas than in Georgia
+across most demographic and risk factor groups. In both states, the prevalence 
+increases with age, with highest levels among older adults (65+), and a higher prevalence is observed in females. Hispanics in Texas fair worse compared to Blacks in Georgia.
+
+
+```{r, figure, echo=FALSE}
+library(ggplot2)
+library(ggeffects)
+
+risk_data <- south_data22 |> filter(Age == "18 years and older", 
+                          Sex == "Both sexes", 
+                          RaceEthnicity == "All races", 
+                          RiskFactor %in% c("Diabetes", "Smoking"), 
+                          RiskFactorResponse == "Yes")
+
+model <- lm(Data_Value ~ RiskFactor + LocationAbbr, data = risk_data)
+
+pred <- ggpredict(model, terms = c("RiskFactor", "LocationAbbr"))
+
+ggplot(pred, aes(x = x, y = predicted, color = group)) +
+  geom_point(size = 3) +
+  labs(
+    x = "Risk Factor",
+    y = "Predicted Prevalence (%)",
+    title = "Predicted Prevalence of Visual Impairment by Risk Factor"
+  )
+
+```
+
+A linear model was fitted to estimate how prevalence differs between the two risk factors and states: diabetes vs. smoking in Georgia vs. Texas. From the plot, we see that in both states, diabetes is associated with higher predicted prevalence of visual impairment than smoking. Across both risk factors, Texas shows a slightly higher predicted prevalence than Georgia, with the difference a little bit over a percentage.
+
+
+
+
