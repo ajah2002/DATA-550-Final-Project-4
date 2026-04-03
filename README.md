@@ -45,4 +45,6 @@ and render the final report.
   - The final report includes a summary table of baseline characteristics (Table 1) and a scatterplot (Figure 1)
   displaying the predicted prevalence of vision impairment by risk factor: diabetes and smoking, and state: TX and GA.
 
-
+### Synchronizing Package Repository
+To synchronize the package repository, open a terminal and run the 'make install` command:
+This will synchronize the library with the lockfile.
