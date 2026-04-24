@@ -24,7 +24,7 @@ install:
 project_final:
 	docker build -t ajah2002/project_final .
 	
-final_report/Final_Project_2_report.html: project_final
+final_report/Final_Project_2_report.html:
 	@if [ "$$(uname)" = "Darwin" ]; then \
 		docker run -v "$$(pwd)/final_report":/final/final_report ajah2002/project_final; \
 	else \
