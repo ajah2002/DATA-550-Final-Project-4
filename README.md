@@ -46,5 +46,18 @@ and render the final report.
   displaying the predicted prevalence of vision impairment by risk factor: diabetes and smoking, and state: TX and GA.
 
 ### Synchronizing Package Repository
-To synchronize the package repository, open a terminal and run the 'make install` command:
+To synchronize the package repository, open a terminal and run the `make install` command:
 This will synchronize the library with the lockfile.
+
+### Docker: Building an image
+To build an image that can be used to create my fully reproducible report, open a terminal and run the `make project_final` command.
+
+### Docker: Running the automated version of the pre-built image
+To generate the compiled report automatically by pulling the Docker image from DockerHub, execute `make final_report/Final_Project_2_report.html` in the terminal.
+
+By executing this command, a container with an empty directory in your project directory called final_report will be created and mounted into the Docker container, allowing the report to be generated inside the container and written back to your local file system in that folder.
+When you execute the command, the compiled report will be found inside the final_report folder.
+NOTE: The make rule caters to both a Windows and Mac system and will run the corresponding code. 
+
+The pre-built image is available as a public repository on Dockerhub and can be accessed via this link:
+https://hub.docker.com/repository/docker/ajah2002/project_final/general
